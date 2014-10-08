@@ -46,6 +46,10 @@ public class Conversion {
 	private String url;
 	private String fileName;
 	private String jsonString;
+	private String callBackUrl;
+	private String folderInBucket;
+	private String gooruBucket;
+	
 	
 
 	public String getScribdAPIKey() {
@@ -174,6 +178,30 @@ public class Conversion {
 
 	public void setJsonString(String jsonString) {
 		this.jsonString = jsonString;
+	}
+
+	public void setCallBackUrl(String callBackUrl) {
+		this.callBackUrl = callBackUrl;
+	}
+
+	public String getCallBackUrl() {
+		return callBackUrl;
+	}
+
+	public void setFolderInBucket(String folderInBucket) {
+		this.folderInBucket = folderInBucket;
+	}
+
+	public String getFolderInBucket() {
+		return folderInBucket;
+	}
+
+	public void setGooruBucket(String gooruBucket) {
+		this.gooruBucket = gooruBucket;
+	}
+
+	public String getGooruBucket() {
+		return gooruBucket;
 	}
 
 

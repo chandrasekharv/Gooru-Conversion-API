@@ -44,10 +44,17 @@ import org.apache.commons.lang.StringUtils;
 import org.ednovo.gooru.application.converter.ConversionAppConstants;
 import org.ednovo.gooru.application.converter.GooruImageUtil;
 import org.ednovo.gooru.application.converter.PdfToImageRenderer;
+import org.jets3t.service.acl.AccessControlList;
+import org.jets3t.service.acl.GroupGrantee;
+import org.jets3t.service.acl.Permission;
+import org.jets3t.service.impl.rest.httpclient.RestS3Service;
+import org.jets3t.service.model.S3Object;
 import org.json.CDL;
 import org.json.JSONArray;
+import org.restlet.resource.ClientResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import atg.taglib.json.util.JSONObject;
@@ -63,6 +70,11 @@ import com.google.code.javascribd.type.FileData;
 public class ConversionServiceImpl implements ConversionService, ConversionAppConstants {
 
 	private static final Logger logger = LoggerFactory.getLogger(GooruImageUtil.class);
+	
+	@Autowired
+	@javax.annotation.Resource(name = "contentS3Service")
+	private RestS3Service s3Service;
+	
 
 	@Override
 	public List<String> resizeImageByDimensions(String srcFilePath, String targetFolderPath, String dimensions, String resourceGooruOid, String sessionToken, String thumbnail, String apiEndPoint) {
@@ -352,6 +364,62 @@ public class ConversionServiceImpl implements ConversionService, ConversionAppCo
 			logger.info("$ Conversion of Csv file failed ", ex);
 		}
 		return null;
+	}
+	
+	@Override
+	public void resourceImageUpload(String folderInBucket, String gooruBucket, String fileName, String callBackUrl, String sourceFilePath) throws Exception {
+		Integer s3UploadFlag = 0;
+		if(folderInBucket != null) {
+			fileName = folderInBucket + fileName;
+		} 
+		File file = new File(sourceFilePath+fileName);
+		if (!file.isDirectory()) {
+			byte[] data = FileUtils.readFileToByteArray(file);
+			S3Object fileObject = new S3Object( fileName, data);
+			fileObject = getS3Service().putObject(gooruBucket, fileObject);
+			setPublicACL(fileName, gooruBucket);
+			s3UploadFlag = 1;
+		} else {
+			listFilesForFolder(file,gooruBucket,fileName);
+			s3UploadFlag = 1;
+		}
+		try {
+			if (callBackUrl != null) {
+				final JSONObject data = new JSONObject();
+				final JSONObject resource = new JSONObject();
+				resource.put("s3UploadFlag", s3UploadFlag);
+				data.put("resource", resource);
+				System.out.println(callBackUrl);
+				new ClientResource(callBackUrl).put(data.toString());
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void setPublicACL(String objectKey,String gooruBucket) throws Exception {
+		S3Object fileObject = getS3Service().getObject(gooruBucket, objectKey);
+		AccessControlList objectAcl = getS3Service().getObjectAcl(gooruBucket, fileObject.getKey());
+		objectAcl.grantPermission(GroupGrantee.ALL_USERS, Permission.PERMISSION_READ);
+		fileObject.setAcl(objectAcl);
+		getS3Service().putObject(gooruBucket, fileObject);
+	}
+
+	public void listFilesForFolder(final File folder,  String gooruBucket, String fileName) throws Exception {
+		for (final File file : folder.listFiles()) {
+			if (file.isDirectory()) {
+				listFilesForFolder(file,  gooruBucket, fileName);
+			} else {
+				byte[] data = FileUtils.readFileToByteArray(file);
+				S3Object fileObject = new S3Object( fileName  + file.getName(), data);
+				fileObject = getS3Service().putObject(gooruBucket, fileObject);
+				setPublicACL(fileName + file.getName(), gooruBucket);
+			}
+		}
+	}
+	
+	public RestS3Service getS3Service() {
+		return s3Service;
 	}
 
 }

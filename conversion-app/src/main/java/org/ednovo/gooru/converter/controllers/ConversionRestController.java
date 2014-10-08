@@ -97,6 +97,15 @@ public class ConversionRestController extends ConversionSerializer {
 		return toModelAndView(getConversionservice().convertJsonToCsv(conversion.getJsonString(), conversion.getTargetFolderPath(),conversion.getFileName()));
 	}
 	
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
+	@RequestMapping(value = "/image/upload", method = { RequestMethod.POST })
+	public ModelAndView resourceImageUpload(@RequestBody String data,HttpServletRequest request, HttpServletResponse response) throws Exception {
+		Conversion conversion = buildMediaFromInputParameters(data);
+		this.getConversionservice().resourceImageUpload(conversion.getFolderInBucket(), conversion.getGooruBucket(), conversion.getFileName(), conversion.getCallBackUrl(), conversion.getSourceFilePath());
+		
+		return null;
+	}
+	
 
 	private Conversion buildMediaFromInputParameters(String json) {
 		return JsonDeserializer.deserialize(json, Conversion.class);

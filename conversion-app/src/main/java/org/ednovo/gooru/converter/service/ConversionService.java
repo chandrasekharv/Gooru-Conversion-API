@@ -43,4 +43,7 @@ public interface ConversionService {
 	String  convertHtmlToPdf(String htmlContent, String targetPath, String sourceHtmlUrl, String filename);
 	
 	String convertJsonToCsv(String jsonString, String targetFolderPath, String filename);
+	
+	void resourceImageUpload(String folderInBucket, String gooruBucket , String fileName,  String callBackUrl, String sourceFilePath) throws Exception;
+	
 }
