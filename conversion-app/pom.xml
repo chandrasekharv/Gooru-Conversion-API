@@ -36,7 +36,7 @@
 					<warName>conversionapp</warName>
 					<dependentWarExcludes>
 						**/jdbc.properties,**/hibernate.cfg.xml,**/sql-map-config.xml,**/web.xml
-                    </dependentWarExcludes>
+					</dependentWarExcludes>
 				</configuration>
 			</plugin>
 		</plugins>
@@ -165,7 +165,7 @@
 			<type>jar</type>
 			<scope>compile</scope>
 		</dependency>
-		
+
 
 		<!-- Temporary -->
 		<dependency>
@@ -182,11 +182,11 @@
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
-           <groupId>org.restlet.jse</groupId>
-           <artifactId>org.restlet</artifactId>
-           <version>2.2.1</version>
-       </dependency>
-       <dependency>
+			<groupId>org.restlet.jse</groupId>
+			<artifactId>org.restlet</artifactId>
+			<version>2.2.1</version>
+		</dependency>
+		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpclient</artifactId>
 			<version>4.3.4</version>
@@ -403,9 +403,28 @@
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
-        <groupId>com.itextpdf.tool</groupId>
-        <artifactId>xmlworker</artifactId>
-        <version>1.1.0</version>
-      </dependency>
+			<groupId>com.itextpdf.tool</groupId>
+			<artifactId>xmlworker</artifactId>
+			<version>1.1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.kafka</groupId>
+			<artifactId>kafka_2.9.2</artifactId>
+			<version>0.8.1.1</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>jmxri</artifactId>
+					<groupId>com.sun.jmx</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>jms</artifactId>
+					<groupId>javax.jms</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>jmxtools</artifactId>
+					<groupId>com.sun.jdmk</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
 	</dependencies>
 </project>
