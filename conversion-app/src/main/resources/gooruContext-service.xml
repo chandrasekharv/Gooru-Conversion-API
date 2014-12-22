@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-	xmlns:util="http://www.springframework.org/schema/util"
-	xmlns:aop="http://www.springframework.org/schema/aop" 
-	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
 	xmlns:context="http://www.springframework.org/schema/context"
 	xmlns:jee="http://www.springframework.org/schema/jee"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
@@ -36,11 +34,21 @@
 		<constructor-arg value="${s3.secureKey}" />
 	</bean>
 
-	<bean id="KafkaProperties" class="org.ednovo.gooru.kafka.producer.KafkaProperties">
+	<bean id="KafkaProperties" class="org.ednovo.gooru.kafka.KafkaProperties">
 		<property name="kafkaIp" value="${insights.kafa.ip}"></property>
 		<property name="kafkaConversionTopic" value="${conversion.kafka.topic}"></property>
 	</bean>
+	
+	<bean id="kafkaConsumer" class = "org.ednovo.gooru.kafka.KafkaConsumer">
+	    <constructor-arg index="0" value="${conversion.kafka.topic}" />
+	    <constructor-arg index="1" value="${insights.kafa.ip}" />
+	</bean>
 
+	<bean id="conversionJobPollThread" class="java.lang.Thread" init-method="start" destroy-method="interrupt">
+		<constructor-arg ref="kafkaConsumer" />
+	</bean>
+
+	
 	<jee:jndi-lookup id="jndisetting" jndi-name="java:comp/env/configSettings"
 		expected-type="java.lang.String" />
 	<bean

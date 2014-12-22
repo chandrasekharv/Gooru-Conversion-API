@@ -18,7 +18,7 @@
 
 	<context:component-scan base-package="org.ednovo.gooru.converter.controllers" />
 	
-	<context:component-scan base-package="org.ednovo.gooru.kafka.producer" />
+	<context:component-scan base-package="org.ednovo.gooru.kafka" />
 	
 	<context:component-scan base-package="org.ednovo.gooru.application.converter" />
 	 

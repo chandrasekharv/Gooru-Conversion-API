@@ -34,6 +34,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.ednovo.gooru.converter.serializer.ConversionSerializer;
 import org.ednovo.gooru.converter.serializer.JsonDeserializer;
 import org.ednovo.gooru.converter.service.ConversionService;
+import org.ednovo.gooru.kafka.KafkaProducer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Propagation;
@@ -51,6 +52,9 @@ public class ConversionRestController extends ConversionSerializer {
 	@Autowired
 	public ConversionService conversionservice;
 
+	@Autowired
+	public KafkaProducer kafkaProducer;
+	
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 	@RequestMapping(value = "/image", method = { RequestMethod.POST })
 	public ModelAndView imageConversion(@RequestBody String data, @RequestParam(value = SESSION_TOKEN, required = true) String sessionToken, HttpServletRequest request, HttpServletResponse response) throws Exception {
@@ -106,6 +110,13 @@ public class ConversionRestController extends ConversionSerializer {
 		return null;
 	}
 	
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
+	@RequestMapping(value = "/kafka", method = { RequestMethod.GET })
+	public ModelAndView conversion(@RequestParam(value = "message", required = true) String message, HttpServletRequest request, HttpServletResponse response) throws Exception {
+		
+		kafkaProducer.send(message);
+		return null;
+	}
 
 	private Conversion buildMediaFromInputParameters(String json) {
 		return JsonDeserializer.deserialize(json, Conversion.class);
