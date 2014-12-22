@@ -49,8 +49,8 @@ public class Conversion {
 	private String callBackUrl;
 	private String folderInBucket;
 	private String gooruBucket;
-	
-	
+	private String jobUid;
+	private String SessionToken;
 
 	public String getScribdAPIKey() {
 		return scribdAPIKey;
@@ -204,5 +204,20 @@ public class Conversion {
 		return gooruBucket;
 	}
 
+	public String getJobUid() {
+		return jobUid;
+	}
+
+	public void setJobUid(String jobUid) {
+		this.jobUid = jobUid;
+	}
+
+	public String getSessionToken() {
+		return SessionToken;
+	}
+
+	public void setSessionToken(String sessionToken) {
+		SessionToken = sessionToken;
+	}
 
 }

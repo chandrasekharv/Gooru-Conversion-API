@@ -46,15 +46,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 @Controller
-@RequestMapping(value = {"/conversion"})
+@RequestMapping(value = { "/conversion" })
 public class ConversionRestController extends ConversionSerializer {
 
 	@Autowired
 	public ConversionService conversionservice;
 
-	@Autowired
-	public KafkaProducer kafkaProducer;
-	
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 	@RequestMapping(value = "/image", method = { RequestMethod.POST })
 	public ModelAndView imageConversion(@RequestBody String data, @RequestParam(value = SESSION_TOKEN, required = true) String sessionToken, HttpServletRequest request, HttpServletResponse response) throws Exception {
@@ -78,7 +75,7 @@ public class ConversionRestController extends ConversionSerializer {
 		getConversionservice().convertPdfToImage(conversion.getResourceFilePath(), conversion.getResourceGooruOid(), conversion.getAuthXml());
 		return null;
 	}
-	
+
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 	@RequestMapping(value = "/image/resize", method = { RequestMethod.POST })
 	public ModelAndView imageResize(@RequestBody String data, @RequestParam(value = SESSION_TOKEN, required = true) String sessionToken, HttpServletRequest request, HttpServletResponse response) throws Exception {
@@ -86,35 +83,33 @@ public class ConversionRestController extends ConversionSerializer {
 		getConversionservice().resizeImage(conversion.getCommand(), conversion.getLogFile());
 		return null;
 	}
+
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 	@RequestMapping(value = "/htmltopdf", method = { RequestMethod.POST })
 	public ModelAndView htmltopdf(@RequestBody String data, @RequestParam(value = SESSION_TOKEN, required = true) String sessionToken, HttpServletRequest request, HttpServletResponse response) throws Exception {
 		Conversion conversion = buildMediaFromInputParameters(data);
 		return toModelAndView(getConversionservice().convertHtmlToPdf(conversion.getHtml(), conversion.getTargetFolderPath(), conversion.getUrl(), conversion.getFileName()));
 	}
-	
-	
+
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 	@RequestMapping(value = "/jsontostring", method = { RequestMethod.POST })
 	public ModelAndView jsontocsv(@RequestBody String data, @RequestParam(value = SESSION_TOKEN, required = true) String sessionToken, HttpServletRequest request, HttpServletResponse response) throws Exception {
 		Conversion conversion = buildMediaFromInputParameters(data);
-		return toModelAndView(getConversionservice().convertJsonToCsv(conversion.getJsonString(), conversion.getTargetFolderPath(),conversion.getFileName()));
+		return toModelAndView(getConversionservice().convertJsonToCsv(conversion.getJsonString(), conversion.getTargetFolderPath(), conversion.getFileName()));
 	}
-	
+
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 	@RequestMapping(value = "/image/upload", method = { RequestMethod.POST })
-	public ModelAndView resourceImageUpload(@RequestBody String data,HttpServletRequest request, HttpServletResponse response) throws Exception {
+	public ModelAndView resourceImageUpload(@RequestBody String data, HttpServletRequest request, HttpServletResponse response) throws Exception {
 		Conversion conversion = buildMediaFromInputParameters(data);
 		this.getConversionservice().resourceImageUpload(conversion.getFolderInBucket(), conversion.getGooruBucket(), conversion.getFileName(), conversion.getCallBackUrl(), conversion.getSourceFilePath());
-		
 		return null;
 	}
-	
+
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
-	@RequestMapping(value = "/kafka", method = { RequestMethod.GET })
-	public ModelAndView conversion(@RequestParam(value = "message", required = true) String message, HttpServletRequest request, HttpServletResponse response) throws Exception {
-		
-		kafkaProducer.send(message);
+	@RequestMapping(value = "/document-to-pdf", method = { RequestMethod.POST })
+	public ModelAndView documentToPdf(@RequestBody String data, HttpServletRequest request, HttpServletResponse response) throws Exception {
+		this.getConversionservice().convertDocumentToPdf(buildMediaFromInputParameters(data));
 		return null;
 	}
 
@@ -126,5 +121,4 @@ public class ConversionRestController extends ConversionSerializer {
 		return conversionservice;
 	}
 
-	
 }

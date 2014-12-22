@@ -28,7 +28,10 @@
  ******************************************************************************/
 package org.ednovo.gooru.converter.service;
 
+import java.io.IOException;
 import java.util.List;
+
+import org.ednovo.gooru.converter.controllers.Conversion;
 
 public interface ConversionService {
 
@@ -46,4 +49,7 @@ public interface ConversionService {
 	
 	void resourceImageUpload(String folderInBucket, String gooruBucket , String fileName,  String callBackUrl, String sourceFilePath) throws Exception;
 	
+	void convertDocumentToPdf(Conversion conversion) throws IOException;
+
+
 }

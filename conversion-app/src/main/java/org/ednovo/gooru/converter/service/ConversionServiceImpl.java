@@ -41,9 +41,14 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
+import org.artofsolving.jodconverter.OfficeDocumentConverter;
+import org.artofsolving.jodconverter.office.DefaultOfficeManagerConfiguration;
+import org.artofsolving.jodconverter.office.OfficeManager;
 import org.ednovo.gooru.application.converter.ConversionAppConstants;
 import org.ednovo.gooru.application.converter.GooruImageUtil;
 import org.ednovo.gooru.application.converter.PdfToImageRenderer;
+import org.ednovo.gooru.converter.controllers.Conversion;
+import org.ednovo.gooru.kafka.KafkaProducer;
 import org.jets3t.service.acl.AccessControlList;
 import org.jets3t.service.acl.GroupGrantee;
 import org.jets3t.service.acl.Permission;
@@ -51,13 +56,13 @@ import org.jets3t.service.impl.rest.httpclient.RestS3Service;
 import org.jets3t.service.model.S3Object;
 import org.json.CDL;
 import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.restlet.resource.ClientResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import atg.taglib.json.util.JSONObject;
 
 import com.google.code.javascribd.connection.ScribdClient;
 import com.google.code.javascribd.connection.StreamableData;
@@ -66,15 +71,19 @@ import com.google.code.javascribd.type.Access;
 import com.google.code.javascribd.type.ApiKey;
 import com.google.code.javascribd.type.FileData;
 
+import flexjson.JSONSerializer;
+
 @Service
 public class ConversionServiceImpl implements ConversionService, ConversionAppConstants {
 
 	private static final Logger logger = LoggerFactory.getLogger(GooruImageUtil.class);
-	
+
 	@Autowired
 	@javax.annotation.Resource(name = "contentS3Service")
 	private RestS3Service s3Service;
-	
+
+	@Autowired
+	private KafkaProducer kafkaProducer;
 
 	@Override
 	public List<String> resizeImageByDimensions(String srcFilePath, String targetFolderPath, String dimensions, String resourceGooruOid, String sessionToken, String thumbnail, String apiEndPoint) {
@@ -365,22 +374,22 @@ public class ConversionServiceImpl implements ConversionService, ConversionAppCo
 		}
 		return null;
 	}
-	
+
 	@Override
 	public void resourceImageUpload(String folderInBucket, String gooruBucket, String fileName, String callBackUrl, String sourceFilePath) throws Exception {
 		Integer s3UploadFlag = 0;
-		if(folderInBucket != null) {
+		if (folderInBucket != null) {
 			fileName = folderInBucket + fileName;
-		} 
-		File file = new File(sourceFilePath+fileName);
+		}
+		File file = new File(sourceFilePath + fileName);
 		if (!file.isDirectory()) {
 			byte[] data = FileUtils.readFileToByteArray(file);
-			S3Object fileObject = new S3Object( fileName, data);
+			S3Object fileObject = new S3Object(fileName, data);
 			fileObject = getS3Service().putObject(gooruBucket, fileObject);
 			setPublicACL(fileName, gooruBucket);
 			s3UploadFlag = 1;
 		} else {
-			listFilesForFolder(file,gooruBucket,fileName);
+			listFilesForFolder(file, gooruBucket, fileName);
 			s3UploadFlag = 1;
 		}
 		try {
@@ -396,8 +405,8 @@ public class ConversionServiceImpl implements ConversionService, ConversionAppCo
 			e.printStackTrace();
 		}
 	}
-	
-	public void setPublicACL(String objectKey,String gooruBucket) throws Exception {
+
+	public void setPublicACL(String objectKey, String gooruBucket) throws Exception {
 		S3Object fileObject = getS3Service().getObject(gooruBucket, objectKey);
 		AccessControlList objectAcl = getS3Service().getObjectAcl(gooruBucket, fileObject.getKey());
 		objectAcl.grantPermission(GroupGrantee.ALL_USERS, Permission.PERMISSION_READ);
@@ -405,21 +414,51 @@ public class ConversionServiceImpl implements ConversionService, ConversionAppCo
 		getS3Service().putObject(gooruBucket, fileObject);
 	}
 
-	public void listFilesForFolder(final File folder,  String gooruBucket, String fileName) throws Exception {
+	public void listFilesForFolder(final File folder, String gooruBucket, String fileName) throws Exception {
 		for (final File file : folder.listFiles()) {
 			if (file.isDirectory()) {
-				listFilesForFolder(file,  gooruBucket, fileName);
+				listFilesForFolder(file, gooruBucket, fileName);
 			} else {
 				byte[] data = FileUtils.readFileToByteArray(file);
-				S3Object fileObject = new S3Object( fileName  + file.getName(), data);
+				S3Object fileObject = new S3Object(fileName + file.getName(), data);
 				fileObject = getS3Service().putObject(gooruBucket, fileObject);
 				setPublicACL(fileName + file.getName(), gooruBucket);
 			}
 		}
 	}
-	
+
 	public RestS3Service getS3Service() {
 		return s3Service;
 	}
 
+	@Override
+	public void convertDocumentToPdf(Conversion conversion) {
+		JSONObject data;
+		try {
+			data = new JSONObject(new JSONSerializer().serialize(conversion));
+			data.put("eventName", "convert.docToPdf");
+			try {
+				if (conversion != null) {
+					OfficeManager officeManager = new DefaultOfficeManagerConfiguration().buildOfficeManager();
+					officeManager.start();
+					if (conversion.getSourceFilePath() != null) {
+						OfficeDocumentConverter converter = new OfficeDocumentConverter(officeManager);
+						converter.convert(new File(conversion.getSourceFilePath()), new File(conversion.getTargetFolderPath() + "/" + conversion.getFileName()));
+						data.put("status", "completed");
+						convertPdfToImage(conversion.getTargetFolderPath() + "/" + conversion.getFileName(), conversion.getResourceGooruOid(), conversion.getAuthXml());
+					}
+					officeManager.stop();
+				}
+			} catch (Exception e) {
+				data.put("status", "failed");
+			}
+			this.getKafkaProducer().send(data.toString());
+		} catch (JSONException jsonException) {
+			logger.error("Failed to parse json : " + jsonException);
+		}
+	}
+
+	public KafkaProducer getKafkaProducer() {
+		return kafkaProducer;
+	}
 }
