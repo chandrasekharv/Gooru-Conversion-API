@@ -274,12 +274,12 @@
 			<artifactId>pdf-renderer</artifactId>
 			<version>1.0.5</version>
 		</dependency>
-<!-- 		<dependency> -->
-<!-- 			<groupId>com.artofsolving</groupId> -->
-<!-- 			<artifactId>jodconverter</artifactId> -->
-<!-- 			<version>3.0</version> -->
-<!-- 			<type>jar</type> -->
-<!-- 		</dependency> -->
+		<dependency>
+			<groupId>com.artofsolving</groupId>
+			<artifactId>jodconverter</artifactId>
+			<version>3.0</version>
+			<type>jar</type>
+		</dependency>
 		<dependency>
 			<groupId>org.openoffice</groupId>
 			<artifactId>juh</artifactId>
