@@ -28,6 +28,11 @@
  ******************************************************************************/
 package org.ednovo.gooru.application.converter;
 
+import java.io.IOException;
+import java.util.List;
+
+import org.ednovo.gooru.converter.controllers.Conversion;
+
 public interface ConversionAppConstants {
 
 	public static final String UPLOAD_MEDIA = "media-folder";
@@ -85,4 +90,5 @@ public interface ConversionAppConstants {
 	String DOT_CSV = ".csv";
 	
 	String SESSION_TOKEN = "sessionToken";
+
 }

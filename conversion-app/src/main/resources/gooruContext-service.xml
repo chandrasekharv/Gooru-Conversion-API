@@ -39,16 +39,6 @@
 		<property name="kafkaConversionTopic" value="${conversion.kafka.topic}"></property>
 	</bean>
 	
-	<bean id="kafkaConsumer" class = "org.ednovo.gooru.kafka.KafkaConsumer">
-	    <constructor-arg index="0" value="${conversion.kafka.topic}" />
-	    <constructor-arg index="1" value="${insights.kafa.ip}" />
-	</bean>
-
-	<bean id="conversionJobPollThread" class="java.lang.Thread" init-method="start" destroy-method="interrupt">
-		<constructor-arg ref="kafkaConsumer" />
-	</bean>
-
-	
 	<jee:jndi-lookup id="jndisetting" jndi-name="java:comp/env/configSettings"
 		expected-type="java.lang.String" />
 	<bean
