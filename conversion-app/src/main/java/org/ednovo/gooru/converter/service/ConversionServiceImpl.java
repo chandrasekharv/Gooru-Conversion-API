@@ -38,6 +38,7 @@ import java.util.List;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
@@ -233,7 +234,7 @@ public class ConversionServiceImpl implements ConversionService, ConversionAppCo
 				String jsonString = jsonAlias.toString();
 				StringRequestEntity requestEntity = new StringRequestEntity(jsonString, APP_JSON, "UTF-8");
 				HttpClient client = new HttpClient();
-				PostMethod postmethod = new PostMethod(apiEndPoint + "/media/resource/thumbnail?sessionToken=" + sessionToken);
+				PutMethod postmethod = new PutMethod(apiEndPoint + "/media/resource/thumbnail?sessionToken=" + sessionToken);
 				postmethod.setRequestEntity(requestEntity);
 				client.executeMethod(postmethod);
 			} catch (Exception ex) {
