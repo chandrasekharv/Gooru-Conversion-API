@@ -65,6 +65,26 @@ public final class KafkaProperties {
 	}
 
 	public String getZkConnectValue() {
-		return getKafkaIp() + ":" + KAFKA_PORT;
+		return buildEndPoint(getKafkaIp(), KAFKA_PORT);
+	}
+
+	public static String buildEndPoint(String ip, String portNo) {
+
+		StringBuffer stringBuffer = new StringBuffer();
+		String[] ips = ip.split(",");
+		String[] ports = portNo.split(",");
+		for (int count = 0; count < ips.length; count++) {
+
+			if (stringBuffer.length() > 0) {
+				stringBuffer.append(",");
+			}
+
+			if (count < ports.length) {
+				stringBuffer.append(ips[count] + ":" + ports[count]);
+			} else {
+				stringBuffer.append(ips[count] + ":" + ports[0]);
+			}
+		}
+		return stringBuffer.toString();
 	}
 }
