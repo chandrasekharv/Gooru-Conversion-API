@@ -443,26 +443,23 @@ public class ConversionServiceImpl implements ConversionService, ConversionAppCo
 				if (conversion != null) {
 					OfficeManager officeManager = new DefaultOfficeManagerConfiguration().buildOfficeManager();
 					officeManager.start();
-					if (conversion.getSourceFilePath() != null) {
-						OfficeDocumentConverter converter = new OfficeDocumentConverter(officeManager);
-						converter.convert(new File(conversion.getSourceFilePath()), new File(conversion.getTargetFolderPath() + "/" + conversion.getFileName()));
-						data.put("status", "completed");
-						convertPdfToImage(conversion.getTargetFolderPath() + "/" + conversion.getFileName(), conversion.getResourceGooruOid(), conversion.getAuthXml());
-						File file = new File(conversion.getSourceFilePath());
-						file.renameTo(new File(conversion.getTargetFolderPath() + "/" + StringUtils.substringBeforeLast(conversion.getFileName(), ".") + ".ppt"));
-					}
-					
+
+					OfficeDocumentConverter converter = new OfficeDocumentConverter(officeManager);
+					converter.convert(new File(conversion.getSourceFilePath()), new File(conversion.getTargetFolderPath() + "/" + conversion.getFileName()));
+					data.put("status", "completed");
+					convertPdfToImage(conversion.getTargetFolderPath() + "/" + conversion.getFileName(), conversion.getResourceGooruOid(), conversion.getAuthXml());
+					File file = new File(conversion.getSourceFilePath());
+					file.renameTo(new File(conversion.getTargetFolderPath() + "/" + StringUtils.substringBeforeLast(conversion.getFileName(), ".") + ".ppt"));
 					officeManager.stop();
 				}
 			} catch (Exception e) {
 				data.put("status", "failed");
 			}
-			this.getKafkaProducer().send(data.toString());
+			new ClientResource(conversion.getApiEndPoint() + "v2/job/" + conversion.getJobUid() + "?sessionToken=" + conversion.getSessionToken()).put(data.toString());
 		} catch (JSONException jsonException) {
 			logger.error("Failed to parse json : " + jsonException);
 		}
 	}
-	
 	public KafkaProducer getKafkaProducer() {
 		return kafkaProducer;
 	}
