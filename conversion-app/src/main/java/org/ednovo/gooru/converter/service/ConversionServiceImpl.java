@@ -451,6 +451,7 @@ public class ConversionServiceImpl implements ConversionService, ConversionAppCo
 					File file = new File(conversion.getSourceFilePath());
 					file.renameTo(new File(conversion.getTargetFolderPath() + "/" + StringUtils.substringBeforeLast(conversion.getFileName(), ".") + ".ppt"));
 					officeManager.stop();
+					resourceImageUpload(conversion.getFolderInBucket(), conversion.getGooruBucket(), conversion.getFileName(), null, conversion.getTargetFolderPath());
 				}
 			} catch (Exception e) {
 				data.put("status", "failed");
