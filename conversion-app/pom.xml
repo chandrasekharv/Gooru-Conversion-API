@@ -32,7 +32,7 @@
 				<artifactId>maven-war-plugin</artifactId>
 				<version>2.0.2</version>
 				<configuration>
-					<webappDirectory>${env.CATALINA_HOME}/webapps/conversionapp</webappDirectory>
+					<webappDirectory>${env.CATALINA_BASE}/webapps/conversionapp</webappDirectory>
 					<warName>conversionapp</warName>
 					<dependentWarExcludes>
 						**/jdbc.properties,**/hibernate.cfg.xml,**/sql-map-config.xml,**/web.xml
