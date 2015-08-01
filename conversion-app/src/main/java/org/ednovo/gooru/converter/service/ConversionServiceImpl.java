@@ -381,7 +381,6 @@ public class ConversionServiceImpl implements ConversionService, ConversionAppCo
 				final JSONObject resource = new JSONObject();
 				resource.put("s3UploadFlag", s3UploadFlag);
 				data.put("resource", resource);
-				System.out.println(callBackUrl);
 				new ClientResource(callBackUrl).put(data.toString());
 			}
 		} catch (Exception e) {
