@@ -225,22 +225,6 @@ public class ConversionServiceImpl implements ConversionService, ConversionAppCo
 				list.add(imagePath);
 			}
 
-			try {
-				JSONObject json = new JSONObject();
-				json.put(RESOURCE_GOORU_OID, resourceGooruOid);
-				json.put(THUMBNAIL, thumbnail);
-				JSONObject jsonAlias = new JSONObject();
-				jsonAlias.put(MEDIA, json);
-				String jsonString = jsonAlias.toString();
-				StringRequestEntity requestEntity = new StringRequestEntity(jsonString, APP_JSON, "UTF-8");
-				HttpClient client = new HttpClient();
-				PutMethod postmethod = new PutMethod(apiEndPoint + "/media/resource/thumbnail?sessionToken=" + sessionToken);
-				postmethod.setRequestEntity(requestEntity);
-				client.executeMethod(postmethod);
-			} catch (Exception ex) {
-				logger.error("rest api call failed!", ex.getMessage());
-			}
-
 		} catch (Exception ex) {
 			logger.error("Multiple scaling of image failed for src : " + srcFilePath + " : ", ex);
 		}
@@ -253,9 +237,7 @@ public class ConversionServiceImpl implements ConversionService, ConversionAppCo
 		try {
 			logger.debug(" src : {} /= target : {}", srcFilePath, destFilePath);
 			File destFile = new File(destFilePath);
-			if (new File(srcFilePath).exists() && destFile.exists()) {
-				destFile.delete();
-			}
+			
 			scaleImageUsingImageMagick(srcFilePath, width, height, destFilePath);
 			imagePath = destFile.getPath();
 		} catch (Exception ex) {
@@ -399,7 +381,6 @@ public class ConversionServiceImpl implements ConversionService, ConversionAppCo
 				final JSONObject resource = new JSONObject();
 				resource.put("s3UploadFlag", s3UploadFlag);
 				data.put("resource", resource);
-				System.out.println(callBackUrl);
 				new ClientResource(callBackUrl).put(data.toString());
 			}
 		} catch (Exception e) {

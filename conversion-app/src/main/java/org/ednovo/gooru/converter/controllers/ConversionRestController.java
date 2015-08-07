@@ -34,7 +34,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.ednovo.gooru.converter.serializer.ConversionSerializer;
 import org.ednovo.gooru.converter.serializer.JsonDeserializer;
 import org.ednovo.gooru.converter.service.ConversionService;
-import org.ednovo.gooru.kafka.KafkaProducer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Propagation;
