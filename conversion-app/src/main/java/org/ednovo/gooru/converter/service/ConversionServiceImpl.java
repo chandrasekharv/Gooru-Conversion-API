@@ -570,14 +570,14 @@ public class ConversionServiceImpl implements ConversionService, ConversionAppCo
 				out = new FileOutputStream(new File(path));
 			} catch (FileNotFoundException e) {
 				filePath = null;
-				e.printStackTrace();
+				logger.error("file not found on server ", e);
 			}
 			try {
 				workbook.write(out);
 				out.close();
 			} catch (IOException e) {
 				filePath = null;
-				e.printStackTrace();
+				logger.error("error in the file output ", e);
 			}
 		} catch (Exception e) {
 			logger.error("something went wrong while converting xlsx", e);
