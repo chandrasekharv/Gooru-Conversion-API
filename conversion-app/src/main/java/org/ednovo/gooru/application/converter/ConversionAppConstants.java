@@ -90,5 +90,20 @@ public interface ConversionAppConstants {
 	String DOT_CSV = ".csv";
 	
 	String SESSION_TOKEN = "sessionToken";
+	
+	String DOT_XLSX = ".xlsx";
 
+	String STUDENT_DATA = "Student Data";
+	
+	String TABLE = "table";
+	
+	String TR = "tr";
+	
+	String TH = "th";
+	
+	String TD = "td";
+	
+	String STYLE = "style";
+	
+	String BACKGROUND_COLOR = "background-color:";
 }

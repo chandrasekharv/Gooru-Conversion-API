@@ -51,5 +51,6 @@ public interface ConversionService {
 	
 	void convertDocumentToPdf(Conversion conversion) throws IOException;
 
+	String convertHtmlToExcel(String htmlContent, String targetPath, String filename);
 
 }

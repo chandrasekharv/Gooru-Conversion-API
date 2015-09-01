@@ -112,6 +112,13 @@ public class ConversionRestController extends ConversionSerializer {
 		return null;
 	}
 
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
+	@RequestMapping(value = "/htmltoexcel", method = { RequestMethod.POST })
+	public ModelAndView htmltoexcel(@RequestBody String data, @RequestParam(value = SESSION_TOKEN, required = true) String sessionToken, HttpServletRequest request, HttpServletResponse response) throws Exception {
+		Conversion conversion = buildMediaFromInputParameters(data);
+		return toModelAndView(getConversionservice().convertHtmlToExcel(conversion.getHtml(), conversion.getTargetFolderPath(), conversion.getFileName()));
+	}
+	
 	private Conversion buildMediaFromInputParameters(String json) {
 		return JsonDeserializer.deserialize(json, Conversion.class);
 	}

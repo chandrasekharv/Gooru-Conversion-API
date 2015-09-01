@@ -28,8 +28,10 @@
  ******************************************************************************/
 package org.ednovo.gooru.converter.service;
 
+import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -42,6 +44,15 @@ import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFColor;
+import org.apache.poi.xssf.usermodel.XSSFFont;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.artofsolving.jodconverter.OfficeDocumentConverter;
 import org.artofsolving.jodconverter.office.DefaultOfficeManagerConfiguration;
 import org.artofsolving.jodconverter.office.OfficeManager;
@@ -59,6 +70,10 @@ import org.json.CDL;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.restlet.resource.ClientResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -445,4 +460,151 @@ public class ConversionServiceImpl implements ConversionService, ConversionAppCo
 	public KafkaProducer getKafkaProducer() {
 		return kafkaProducer;
 	}
+
+	@Override
+	public String convertHtmlToExcel(String htmlContent, String targetPath, String filename) {
+		File targetDir = new File(targetPath);
+		if (!targetDir.exists()) {
+			targetDir.mkdirs();
+		}
+		if (filename == null) {
+			filename = String.valueOf(System.currentTimeMillis());
+		} else {
+			File file = new File(targetPath + filename + DOT_XLSX);
+			if (file.exists()) {
+				filename = filename + "-" + System.currentTimeMillis();
+			}
+		}
+		
+		if (htmlContent != null) {
+				String filePath = targetPath + filename + DOT_XLSX;
+				File file = new File(filePath);
+				return convertHtmlToExcel(htmlContent, file, filePath);
+		}
+		return null;
+	}
+	
+	private static String convertHtmlToExcel(String htmlContent, File file, String filePath) {
+		try {
+			XSSFWorkbook workbook = new XSSFWorkbook();
+			// create excel sheet
+			XSSFSheet sheet = workbook.createSheet();
+			workbook.setSheetName(workbook.getSheetIndex(sheet), STUDENT_DATA);
+			
+			//Set Header Font
+			XSSFFont headerFont = workbook.createFont();
+			headerFont.setBoldweight(headerFont.BOLDWEIGHT_BOLD);
+			headerFont.setFontHeightInPoints((short) 12);
+
+			//Set Header Style
+			CellStyle headerStyle = workbook.createCellStyle();
+			headerStyle.setFillBackgroundColor(IndexedColors.BLACK.getIndex());
+			headerStyle.setAlignment(headerStyle.ALIGN_CENTER);
+			headerStyle.setFont(headerFont);
+
+			int rowCount = 0;
+
+			Document doc = Jsoup.parse(htmlContent);
+			
+			/**
+			 * 1. The <table> tag should be the outer most element. Multiple <table> or other HTML tags should not appear at the same level
+			 *  Not allowed
+			 *  <table>....</table>
+			 *  <div>...<div>
+			 *  <table>....</table>
+			 *  <div>...<div>
+			 *  <table>....</table>
+			 *  
+			 *  Allowed
+			 *  <table> 
+			 *  	<tr>
+			 *  		<th></th>
+			 *  		<th><div></div></th>
+			 *  	</tr>
+			 *  	</tr>
+			 *  		<td></td>
+			 *  		<td><div></div></td>
+			 *  	</tr>
+			 *  </table>
+			 *  
+			 *  2. Table Cell <TD> should be given a background color 
+			 */
+			
+			for (Element table : doc.select(TABLE)) {
+				// loop through all tr of table
+				for (Element row : table.select(TR)) {
+					// create row for each tag
+					Row header = sheet.createRow(rowCount);
+					// loop through all tag of tag
+
+					Elements ths = row.select(TH);
+					int count = 0;
+					for (Element element : ths) {
+						Cell cell = header.createCell(count);
+						sheet.setColumnWidth(count, 15*256);
+						// set header style
+						cell.setCellValue(element.text());
+						cell.setCellStyle(headerStyle);
+						count++;
+					}
+					// now loop through all td tag
+					Elements tds = row.select(TD);
+					count = 0;
+					for (Element element : tds) {
+						// create cell for each tag
+						Cell cell = header.createCell(count);
+						String bgStyle = element.attr(STYLE);
+						if(bgStyle != null&&!bgStyle.isEmpty()&&bgStyle.contains("#")) {
+							cell.setCellStyle(getCellStyle(workbook.createCellStyle(), bgStyle.replaceAll(BACKGROUND_COLOR, "")));
+						}
+						cell.setCellValue(element.text());
+						count++;
+					}
+					rowCount++;
+				}
+			}
+
+			String path = file.getAbsolutePath();
+			FileOutputStream out = null;
+			try {
+				out = new FileOutputStream(new File(path));
+			} catch (FileNotFoundException e) {
+				filePath = null;
+				e.printStackTrace();
+			}
+			try {
+				workbook.write(out);
+				out.close();
+			} catch (IOException e) {
+				filePath = null;
+				e.printStackTrace();
+			}
+		} catch (Exception e) {
+			logger.error("something went wrong while converting xlsx", e);
+		}
+		return filePath;
+	}
+	
+	private static XSSFCellStyle getCellStyle(XSSFCellStyle cellStyle, String hexa) {
+		Color c = new Color(
+				Integer.valueOf(hexa.substring(1, 3), 16),
+				Integer.valueOf(hexa.substring(3, 5), 16),
+				Integer.valueOf(hexa.substring(5, 7), 16));
+		byte[] rgb = new byte[3];
+		rgb[0] = (byte) c.getRed();
+		rgb[1] = (byte) c.getGreen();
+		rgb[2] = (byte) c.getBlue();
+		cellStyle.setFillForegroundColor(new XSSFColor(rgb));
+		cellStyle.setFillPattern(XSSFCellStyle.SOLID_FOREGROUND);
+		cellStyle.setBorderLeft(XSSFCellStyle.BORDER_THIN);             
+		cellStyle.setBorderRight(XSSFCellStyle.BORDER_THIN);            
+		cellStyle.setBorderTop(XSSFCellStyle.BORDER_THIN);
+		cellStyle.setBorderBottom(XSSFCellStyle.BORDER_THIN);
+		cellStyle.setBottomBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+		cellStyle.setTopBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+		cellStyle.setLeftBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+		cellStyle.setRightBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+		return cellStyle;
+	}
+	
 }
