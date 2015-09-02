@@ -468,7 +468,7 @@ public class ConversionServiceImpl implements ConversionService, ConversionAppCo
 			if (!targetDir.exists()) {
 				targetDir.mkdirs();
 			}
-			if (filename == null) {
+			if (filename == null || (filename!=null&&filename.isEmpty())) {
 				filename = String.valueOf(System.currentTimeMillis());
 			} else {
 				File file = new File(targetPath + filename + DOT_XLSX);
