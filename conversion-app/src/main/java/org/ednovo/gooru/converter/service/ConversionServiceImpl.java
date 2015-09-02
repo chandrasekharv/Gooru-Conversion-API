@@ -463,28 +463,27 @@ public class ConversionServiceImpl implements ConversionService, ConversionAppCo
 
 	@Override
 	public String convertHtmlToExcel(String htmlContent, String targetPath, String filename) {
-		File targetDir = new File(targetPath);
-		if (!targetDir.exists()) {
-			targetDir.mkdirs();
-		}
-		if (filename == null) {
-			filename = String.valueOf(System.currentTimeMillis());
-		} else {
-			File file = new File(targetPath + filename + DOT_XLSX);
-			if (file.exists()) {
-				filename = filename + "-" + System.currentTimeMillis();
-			}
-		}
-		
 		if (htmlContent != null) {
-				String filePath = targetPath + filename + DOT_XLSX;
-				File file = new File(filePath);
-				return convertHtmlToExcel(htmlContent, file, filePath);
+			File targetDir = new File(targetPath);
+			if (!targetDir.exists()) {
+				targetDir.mkdirs();
+			}
+			if (filename == null) {
+				filename = String.valueOf(System.currentTimeMillis());
+			} else {
+				File file = new File(targetPath + filename + DOT_XLSX);
+				if (file.exists()) {
+					filename = filename + "-" + System.currentTimeMillis();
+				}
+			}
+			
+			String filePath = targetPath + filename + DOT_XLSX;
+			return convertHtmlToExcel(htmlContent, filePath);
 		}
 		return null;
 	}
 	
-	private static String convertHtmlToExcel(String htmlContent, File file, String filePath) {
+	private String convertHtmlToExcel(String htmlContent, String filePath) {
 		try {
 			XSSFWorkbook workbook = new XSSFWorkbook();
 			// create excel sheet
@@ -563,7 +562,7 @@ public class ConversionServiceImpl implements ConversionService, ConversionAppCo
 					rowCount++;
 				}
 			}
-
+			File file = new File(filePath);
 			String path = file.getAbsolutePath();
 			FileOutputStream out = null;
 			try {
@@ -574,10 +573,16 @@ public class ConversionServiceImpl implements ConversionService, ConversionAppCo
 			}
 			try {
 				workbook.write(out);
-				out.close();
 			} catch (IOException e) {
 				filePath = null;
-				logger.error("error in the file output ", e);
+				logger.error("error in the writing to the file ", e);
+			} finally {
+				try {
+					out.close();
+				} catch (IOException e) {
+					filePath = null;
+					logger.error("error in the file output ", e);
+				}
 			}
 		} catch (Exception e) {
 			logger.error("something went wrong while converting xlsx", e);
@@ -585,7 +590,7 @@ public class ConversionServiceImpl implements ConversionService, ConversionAppCo
 		return filePath;
 	}
 	
-	private static XSSFCellStyle getCellStyle(XSSFCellStyle cellStyle, String hexa) {
+	private XSSFCellStyle getCellStyle(XSSFCellStyle cellStyle, String hexa) {
 		Color c = new Color(
 				Integer.valueOf(hexa.substring(1, 3), 16),
 				Integer.valueOf(hexa.substring(3, 5), 16),
